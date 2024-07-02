@@ -1,22 +1,21 @@
 import requests
 import json
 import xml.etree.ElementTree as ET
-import numpy as np
 from datetime import datetime
 
 # ------------------------------------------------------
 # Before running the script:
 #   + Copy the URL of the "WORK PACKAGES" page in the menu on the left. 
-#   + Paste the URL into the PROJECT_LINK variable below on line 12. 
+#   + Paste the URL into the PROJECT_LINK variable below on line 11. 
 
 PROJECT_LINK = "https://op.integer-tech.com/projects/integer-example-project/work_packages"
 
 #   + In Open Project, click on your profile circle on the top right. 
 #   + Click on "My Account" and go to "Access tokens" in the menu on the left. 
 #   + Generate an API token (it will look like a long string of random characters) and copy it from the pop-up. 
-#   + Paste the API token into the API_KEY variable on line 19. 
+#   + Paste the API token into the API_KEY variable on line 18. 
 
-API_KEY = "API KEY HERE"
+API_KEY = "f79f23e67a08a29507b45c1cebed7f6416c4c4bd6697104c66c3ed076abcc395"
 
 #   + Run the script. 
 #   + The resultant XML file will match the name of the project and will be generated in the same folder as the script. 
@@ -61,7 +60,7 @@ for entry in data:
             endDate = datetime.strptime(entry["dueDate"], '%Y-%m-%d')
 
         # Check if duration exists
-        if entry["startDate"] is None and entry["dueDate"] is None:
+        if entry["startDate"] is None or entry["dueDate"] is None:
             duration = "n/a"
         else:
             duration = int(entry["duration"].strip("PD"))
@@ -138,7 +137,7 @@ ET.SubElement(task, "UID").text = "0"
 ET.SubElement(task, "Name").text = name
 ET.SubElement(task, "Start").text = datetime.strftime(min(sanStart), '%Y-%m-%dT%H:%M:%S')
 ET.SubElement(task, "Finish").text = datetime.strftime(max(sanEnd), '%Y-%m-%dT%H:%M:%S')
-ET.SubElement(task, "Duration").text = f"PT{int(max(sanEnd) - min(sanStart)).removesuffix(" days, 0:00:00") * 8}H0M0S"
+ET.SubElement(task, "Duration").text = f"PT{int(str(max(sanEnd) - min(sanStart)).removesuffix(" days, 0:00:00")) * 8}H0M0S"
 
 # Build individual tasks
 for i in range(len(sTask)):
