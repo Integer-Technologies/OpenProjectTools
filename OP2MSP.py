@@ -15,7 +15,7 @@ PROJECT_LINK = "https://op.integer-tech.com/projects/integer-example-project/wor
 #   + Generate an API token (it will look like a long string of random characters) and copy it from the pop-up. 
 #   + Paste the API token into the API_KEY variable on line 18. 
 
-API_KEY = "f79f23e67a08a29507b45c1cebed7f6416c4c4bd6697104c66c3ed076abcc395"
+API_KEY = "API KEY GOES HERE"
 
 #   + Run the script. 
 #   + The resultant XML file will match the name of the project and will be generated in the same folder as the script. 
@@ -25,7 +25,11 @@ API_KEY = "f79f23e67a08a29507b45c1cebed7f6416c4c4bd6697104c66c3ed076abcc395"
 
 # Modify link to access API
 api_link = PROJECT_LINK.removeprefix('https://op.integer-tech.com/')
-response = requests.request('GET', 'https://op.integer-tech.com/api/v3/' + api_link + '?pageSize=1000', auth=('apikey', API_KEY))
+response = requests.request('GET', f"https://op.integer-tech.com/api/v3/{api_link}?pageSize=1000", auth=('apikey', API_KEY))
+
+# Check if the API responds
+if response.status_code != requests.codes.ok:
+    raise SystemExit("Bad API response! Check if the API key is correct.")
 
 name = api_link.removeprefix('projects/').removesuffix('/work_packages')
 
@@ -45,25 +49,21 @@ for entry in data:
     relation = entry["_links"]["parent"]["title"]
     percent = entry["percentageDone"]
 
-    # Check if startDate exists, if not, only append end date
+    # Check if startDate exists, if not, only append end date; only really applicable to milestones
     if "startDate" in entry.keys():
 
-        # Check if startDate and dueDate contain information
+        # Check if startDate and dueDate contain information, if not, exit with missing information
         if entry["startDate"] is None:
-            startDate = "n/a"
+            raise SystemExit(f"Uh oh! Missing start date on Name: {subject}, ID: {id}. Please provide a valid start date.")
         else:
             startDate = datetime.strptime(entry["startDate"], '%Y-%m-%d')
 
         if entry["dueDate"] is None:
-            endDate = "n/a"
+            raise SystemExit(f"Uh oh! Missing due date on Name: {subject}, ID: {id}. Please provide a valid due date.")
         else:
             endDate = datetime.strptime(entry["dueDate"], '%Y-%m-%d')
 
-        # Check if duration exists
-        if entry["startDate"] is None or entry["dueDate"] is None:
-            duration = "n/a"
-        else:
-            duration = int(entry["duration"].strip("PD"))
+        duration = int(entry["duration"].strip("PD"))
 
     else:
         startDate = "n/a"
@@ -107,15 +107,13 @@ while taskList:
 
             # Insert child after parent and remove from unsorted list
             sTask.insert(position + 1, val)
-            taskList.pop(i)   
+            taskList.pop(i)
 
 # Begin building xml file
 root = ET.Element("Project")
 root.set('xmlns', 'http://schemas.microsoft.com/project')
 
 # Create headers for MS Project schema
-ET.SubElement(root, "SaveVersion").text = "14"
-ET.SubElement(root, "BuildNumber").text = "16.0.17328.20282"
 ET.SubElement(root, "Name").text = f"{name}.xml"
 ET.SubElement(root, "Title").text = str(name)
 
@@ -141,40 +139,72 @@ ET.SubElement(task, "Duration").text = f"PT{int(str(max(sanEnd) - min(sanStart))
 
 # Build individual tasks
 for i in range(len(sTask)):
-    
     task = ET.SubElement(tasks, "Task")
-    ET.SubElement(task, "UID").text = str(i + 1)
+
+    # Save OP ID for task relationships
+    uid = ET.SubElement(task, "UID")
+    uid.set('opID', str(sTask[i][0]))
+    uid.text = str(i + 1)
+
     ET.SubElement(task, "Name").text = sTask[i][1]
     ET.SubElement(task, "Manual").text = "1"
     ET.SubElement(task, "OutlineLevel").text = str(sTask[i][7])
     ET.SubElement(task, "Priority").text = "500"
 
     # Format datetime object into a string and append duration
-    # This is disgusting...
     if isinstance(sTask[i][4], datetime) is True:
         ET.SubElement(task, "Start").text = datetime.strftime(sTask[i][4], '%Y-%m-%dT%H:%M:%S')
-    if isinstance(sTask[i][5], datetime) is True:
-        ET.SubElement(task, "Finish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
+    
+    ET.SubElement(task, "Finish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
+
     if isinstance(sTask[i][6], int) is True:
         ET.SubElement(task, "Duration").text = f"PT{sTask[i][6] * 8}H0M0S"
+    
     if isinstance(sTask[i][4], datetime) is True:
         ET.SubElement(task, "ManualStart").text = datetime.strftime(sTask[i][4], '%Y-%m-%dT%H:%M:%S')
-    if isinstance(sTask[i][5], datetime) is True:
-        ET.SubElement(task, "ManualFinish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
-    if isinstance(sTask[i][6], int) is True:
-        ET.SubElement(task, "ManualDuration").text = f"PT{sTask[i][6] * 8}H0M0S"
     
+    ET.SubElement(task, "ManualFinish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
     ET.SubElement(task, "ManualDuration").text = "PT24H0M0S"
     ET.SubElement(task, "DurationFormat").text = "7"
     ET.SubElement(task, "FreeformDurationFormat").text = "7"
-    ET.SubElement(task, "IsSubproject").text = "0"
-    ET.SubElement(task, "PercentComplete").text = "0"
     ET.SubElement(task, "PercentWorkComplete").text = str(sTask[i][3])
 
     # Calculate remaining duration in work hours
     if isinstance(sTask[i][6], int) is True:
         ET.SubElement(task, "RemainingDuration").text = f"PT{sTask[i][6] * 8}H0M0S"
 
+# Build task relationships
+for t in root.iter("Task"):
+
+    # Grab Open Project's ID
+    opID = t.find('UID').get('opID')
+
+    # Get API response for relations
+    relationResponse = requests.request('GET', f"https://op.integer-tech.com/api/v3/work_packages/{opID}/relations", auth=('apikey', API_KEY))
+    relationJson = json.loads(relationResponse.text)
+
+    # Check if response is not an error and contains any relations
+    if relationJson["_type"] != "Error":
+        if relationJson["total"] != 0:
+            
+            # Grab individual relations for each task
+            for entry in relationJson["_embedded"]["elements"]:
+
+                # Set target and origin task
+                origin = int(entry["_links"]["from"]["href"].lstrip("/api/v3/work_packages"))
+                target = int(entry["_links"]["to"]["href"].lstrip("/api/v3/work_packages"))
+
+                # Only add relation if the origin is the current task; this prevents repeat relations
+                if origin == int(opID):
+                    
+                    # Find the target's ID using Open Project ID
+                    pred = root.find(f".//UID[@opID='{target}']")
+
+                    # Build predecessor tag and assign predecessor
+                    PredLink = ET.SubElement(t, "PredecessorLink")
+                    ET.SubElement(PredLink, "PredecessorUID").text = pred.text
+
 # Write to XML file
 output = ET.ElementTree(root)
+ET.indent(output, space = '\t', level = 0)
 output.write(f"{name}.xml")
