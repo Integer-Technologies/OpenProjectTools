@@ -33,4 +33,4 @@ Download the OP2MSP.py file. A text editor will be required for inserting the AP
 10. You may have to change the file selection via the drop down on the bottom right to "All Files".
 
 # Known Issues
-+ Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. 
++ Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. However Start and Finish date entries along with Duration are correct. 
