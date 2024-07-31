@@ -15,7 +15,7 @@ PROJECT_LINK = "https://op.integer-tech.com/projects/integer-example-project/wor
 #   + Generate an API token (it will look like a long string of random characters) and copy it from the pop-up. 
 #   + Paste the API token into the API_KEY variable on line 18. 
 
-API_KEY = "API KEY GOES HERE"
+API_KEY = "API KEY HERE"
 
 #   + Run the script. 
 #   + The resultant XML file will match the name of the project and will be generated in the same folder as the script. 
@@ -68,6 +68,7 @@ for entry in data:
     else:
         startDate = "n/a"
         endDate = datetime.strptime(entry["date"], '%Y-%m-%d')
+        duration = 0
 
     # Create unsorted task list
     taskList.append([id, subject, relation, percent, startDate, endDate, duration])
@@ -75,19 +76,18 @@ for entry in data:
 # Create a list for sorting tasks for the heirarchy
 sTask = []
 
-# Get root tasks (janky way to do this)
-while None in [i[2] for i in taskList]:
-    for i, val in enumerate(taskList):
+# Get root tasks
+for i, val in enumerate(reversed(taskList)):
 
-        # If task is parentless
-        if val[2] is None:
+    # If task is parentless
+    if val[2] is None:
 
-            # Assign hierarchy
-            val.append(1)
+        # Assign hierarchy
+        val.append(1)
 
-            # Add to sorted tasks and remove from unsorted tasks
-            sTask.append(val)
-            taskList.pop(i)
+        # Insert at the beginning of sorted tasks and remove from unsorted tasks
+        sTask.insert(0, val)
+        taskList.remove(val)
 
 # Loop over unsorted list until empty
 while taskList:
@@ -107,7 +107,7 @@ while taskList:
 
             # Insert child after parent and remove from unsorted list
             sTask.insert(position + 1, val)
-            taskList.pop(i)
+            taskList.remove(val)
 
 # Begin building xml file
 root = ET.Element("Project")
@@ -154,24 +154,17 @@ for i in range(len(sTask)):
     # Format datetime object into a string and append duration
     if isinstance(sTask[i][4], datetime) is True:
         ET.SubElement(task, "Start").text = datetime.strftime(sTask[i][4], '%Y-%m-%dT%H:%M:%S')
-    
-    ET.SubElement(task, "Finish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
-
-    if isinstance(sTask[i][6], int) is True:
-        ET.SubElement(task, "Duration").text = f"PT{sTask[i][6] * 8}H0M0S"
-    
-    if isinstance(sTask[i][4], datetime) is True:
         ET.SubElement(task, "ManualStart").text = datetime.strftime(sTask[i][4], '%Y-%m-%dT%H:%M:%S')
     
+    ET.SubElement(task, "Finish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
+    ET.SubElement(task, "Duration").text = f"PT{sTask[i][6] * 8}H0M0S"
     ET.SubElement(task, "ManualFinish").text = datetime.strftime(sTask[i][5], '%Y-%m-%dT%H:%M:%S')
-    ET.SubElement(task, "ManualDuration").text = "PT24H0M0S"
+    ET.SubElement(task, "ManualDuration").text = f"PT{sTask[i][6] * 8}H0M0S"
     ET.SubElement(task, "DurationFormat").text = "7"
     ET.SubElement(task, "FreeformDurationFormat").text = "7"
+    ET.SubElement(task, "PercentComplete").text = "0"
     ET.SubElement(task, "PercentWorkComplete").text = str(sTask[i][3])
-
-    # Calculate remaining duration in work hours
-    if isinstance(sTask[i][6], int) is True:
-        ET.SubElement(task, "RemainingDuration").text = f"PT{sTask[i][6] * 8}H0M0S"
+    ET.SubElement(task, "RemainingDuration").text = f"PT{sTask[i][6] * 8}H0M0S"
 
 # Build task relationships
 for t in root.iter("Task"):
