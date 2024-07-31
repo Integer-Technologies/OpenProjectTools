@@ -32,5 +32,7 @@ Download the OP2MSP.py file. A text editor will be required for inserting the AP
 9. To open in MS Project, open MS Project, click "Open", and select the XML file. 
 10. You may have to change the file selection via the drop down on the bottom right to "All Files".
 
+Note: While Open Project allows tasks to not have start dates, tasks and sub-tasks must have a valid start and end date for this script. An error will be thrown if a task is missing a start or end date with the missing entry and task being printed in the console. 
+
 # Known Issues
 + Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. However Start and Finish date entries along with Duration are correct. 
