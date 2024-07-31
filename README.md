@@ -1,6 +1,11 @@
 # Description
 OP2MSP is a Python script to convert Open Project projects to Microsoft Project XML files. Exporting a project requires access to said project in Open Project. 
 
+### Features
+- Converts Open Project projects into Microsoft Project XMl files.
+- Retains parent/child relations along with follows/precedes relationships.
+- Lightweight script using mostly standard Python libraries. 
+
 # Requirements
 OP2MSP requires Python >=3.8. 
 
@@ -16,9 +21,9 @@ The export script requires the user to have access to the Open Project project.
 Download the OP2MSP.py file. A text editor will be required for inserting the API key and project link into the script. Instructions are below but also within the script itself. 
 
 ### Usage
-1. Copy the URL of the "WORK PACKAGES" page in the menu on the left. 
+1. Copy the URL of the "WORK PACKAGES" page in the menu on the left on the Open Project web page. 
 2. Paste the URL into the `PROJECT_LINK` variable on line 11 in the script. 
-3. In Open Project, click on your profile circle on the top right. 
+3. In the Open Project web page, click on your profile circle on the top right. 
 4. Click on "My Account" and go to "Access tokens" in the menu on the left. 
 5. Generate an API token (it will look like a long string of random characters) and copy it from the pop-up. 
 6. Paste the API token into the `API_KEY` variable on line 18 in the script. 
@@ -27,5 +32,5 @@ Download the OP2MSP.py file. A text editor will be required for inserting the AP
 9. To open in MS Project, open MS Project, click "Open", and select the XML file. 
 10. You may have to change the file selection via the drop down on the bottom right to "All Files".
 
-# Known issues
+# Known Issues
 + Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. 
