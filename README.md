@@ -21,7 +21,7 @@ The export script requires the user to have access to the Open Project project.
 Download the OP2MSP.py file. A text editor will be required for inserting the API key and project link into the script. Instructions are below but also within the script itself. 
 
 ### Usage
-1. Copy the URL of the "WORK PACKAGES" page in the menu on the left on the Open Project web page. 
+1. Copy the URL of the project in the Open Project web page. 
 2. Paste the URL into the `PROJECT_LINK` variable on line 11 in the script. 
 3. In the Open Project web page, click on your profile circle on the top right. 
 4. Click on "My Account" and go to "Access tokens" in the menu on the left. 
@@ -36,12 +36,13 @@ Note: While Open Project allows tasks to not have start dates, tasks and sub-tas
 
 # Known Issues
 + Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. However Start and Finish date entries along with Duration are correct.
-+ Due to the way the API sorts tasks by ID, there is no guarantee that the order that the tasks are sorted in Open Project is retained in the export to Microsoft Project. 
++ Due to the way the API sorts tasks by ID, there is no guarantee that the order that the tasks are sorted in Open Project is retained in the export to Microsoft Project. However, this script aims to retain as much of the ordering as possible. 
 
 # Version History
 *1.1*
   - Tasks are now sorted in the same order when converting. 
   - Added a dynamic page size instead of an arbitrary page size of 1000.
   - The URL is no longer required to be from the Work Packages page; any page within the project will do. 
+
 *1.0*
   - Initial release. 
