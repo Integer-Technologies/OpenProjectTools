@@ -35,4 +35,13 @@ Download the OP2MSP.py file. A text editor will be required for inserting the AP
 Note: While Open Project allows tasks to not have start dates, tasks and sub-tasks must have a valid start and end date for this script. An error will be thrown if a task is missing a start or end date with the missing entry and task being printed in the console. 
 
 # Known Issues
-+ Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. However Start and Finish date entries along with Duration are correct. 
++ Some exported Gantt Charts in Microsoft Project may be truncated by one (1) day. However Start and Finish date entries along with Duration are correct.
++ Due to the way the API sorts tasks by ID, there is no guarantee that the order that the tasks are sorted in Open Project is retained in the export to Microsoft Project. 
+
+# Version History
+*1.1*
+  - Tasks are now sorted in the same order when converting. 
+  - Added a dynamic page size instead of an arbitrary page size of 1000.
+  - The URL is no longer required to be from the Work Packages page; any page within the project will do. 
+*1.0*
+  - Initial release. 
