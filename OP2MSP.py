@@ -5,12 +5,12 @@ from datetime import datetime
 
 # ------------------------------------------------------
 # Before running the script:
-#   + Copy the URL of the "WORK PACKAGES" page in the menu on the left. 
+#   + Copy the URL of the project in the Open Project web page. 
 #   + Paste the URL into the PROJECT_LINK variable below on line 11. 
 
 PROJECT_LINK = "https://op.integer-tech.com/projects/integer-example-project/work_packages"
 
-#   + In Open Project, click on your profile circle on the top right. 
+#   + In Open Project web page, click on your profile circle on the top right. 
 #   + Click on "My Account" and go to "Access tokens" in the menu on the left. 
 #   + Generate an API token (it will look like a long string of random characters) and copy it from the pop-up. 
 #   + Paste the API token into the API_KEY variable on line 18. 
@@ -23,17 +23,25 @@ API_KEY = "API KEY HERE"
 #   + You may have to change the file selection via the drop down on the bottom right to "All Files". 
 # ------------------------------------------------------
 
-# Modify link to access API
-api_link = PROJECT_LINK.removeprefix('https://op.integer-tech.com/')
-response = requests.request('GET', f"https://op.integer-tech.com/api/v3/{api_link}?pageSize=1000", auth=('apikey', API_KEY))
+# Modify link to get project name by removing the domain name and cleaning up the path
+projectName = PROJECT_LINK.split('/')[4]
+
+response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages", auth=('apikey', API_KEY))
 
 # Check if the API responds
 if response.status_code != requests.codes.ok:
     raise SystemExit("Bad API response! Check if the API key is correct.")
 
-name = api_link.removeprefix('projects/').removesuffix('/work_packages')
-
 # Load API return into JSON
+jason = json.loads(response.text)
+
+# Grab page size
+pSize = jason["total"]
+
+# Access API again with the correct page size
+response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages?pageSize={pSize}", auth=('apikey', API_KEY))
+
+# Load new API response into JSON
 jason = json.loads(response.text)
 
 # Grab project data from JSON
@@ -91,7 +99,7 @@ for i, val in enumerate(reversed(taskList)):
 
 # Loop over unsorted list until empty
 while taskList:
-    for i, val in enumerate(taskList):
+    for i, val in enumerate(reversed(taskList)):
 
         # Get current sorted parents
         parents = [child[1] for child in sTask]
@@ -109,13 +117,13 @@ while taskList:
             sTask.insert(position + 1, val)
             taskList.remove(val)
 
-# Begin building xml file
+# Begin building XML file
 root = ET.Element("Project")
 root.set('xmlns', 'http://schemas.microsoft.com/project')
 
 # Create headers for MS Project schema
-ET.SubElement(root, "Name").text = f"{name}.xml"
-ET.SubElement(root, "Title").text = str(name)
+ET.SubElement(root, "Name").text = f"{projectName}.xml"
+ET.SubElement(root, "Title").text = str(projectName)
 
 tasks = ET.SubElement(root, 'Tasks')
 
@@ -132,7 +140,7 @@ for i in range(len(sTask)):
 # Build overview task
 task = ET.SubElement(tasks, "Task")
 ET.SubElement(task, "UID").text = "0"
-ET.SubElement(task, "Name").text = name
+ET.SubElement(task, "Name").text = projectName
 ET.SubElement(task, "Start").text = datetime.strftime(min(sanStart), '%Y-%m-%dT%H:%M:%S')
 ET.SubElement(task, "Finish").text = datetime.strftime(max(sanEnd), '%Y-%m-%dT%H:%M:%S')
 ET.SubElement(task, "Duration").text = f"PT{int(str(max(sanEnd) - min(sanStart)).removesuffix(" days, 0:00:00")) * 8}H0M0S"
@@ -200,4 +208,4 @@ for t in root.iter("Task"):
 # Write to XML file
 output = ET.ElementTree(root)
 ET.indent(output, space = '\t', level = 0)
-output.write(f"{name}.xml")
+output.write(f"{projectName}.xml")
