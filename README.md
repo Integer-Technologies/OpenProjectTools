@@ -7,7 +7,7 @@ OP2MSP is a Python script to convert Open Project projects to Microsoft Project 
 - Lightweight script using mostly standard Python libraries. 
 
 # Requirements
-OP2MSP requires Python >=3.8. 
+OP2MSP requires Python >=3.7. 
 
 Libraries used:
 - [requests](https://pypi.org/project/requests/) - A simple HTTP library for API requests. 
