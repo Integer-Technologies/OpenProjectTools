@@ -1,7 +1,10 @@
+#!/usr/bin/python3.12
+
 import requests
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime 
+requests.logging.captureWarnings(True)
 
 # ------------------------------------------------------
 # Before running the script:
@@ -26,7 +29,7 @@ API_KEY = "API KEY HERE"
 # Modify link to get project name by removing the domain name and cleaning up the path
 projectName = PROJECT_LINK.split('/')[4]
 
-response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages", auth=('apikey', API_KEY))
+response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages", auth=('apikey', API_KEY), verify=False)
 
 # Check if the API responds
 if response.status_code != requests.codes.ok:
@@ -39,7 +42,7 @@ jason = json.loads(response.text)
 pSize = jason["total"]
 
 # Access API again with the correct page size
-response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages?pageSize={pSize}", auth=('apikey', API_KEY))
+response = requests.request('GET', f"https://op.integer-tech.com/api/v3/projects/{projectName}/work_packages?pageSize={pSize}", auth=('apikey', API_KEY), verify=False)
 
 # Load new API response into JSON
 jason = json.loads(response.text)
@@ -143,7 +146,7 @@ ET.SubElement(task, "UID").text = "0"
 ET.SubElement(task, "Name").text = projectName
 ET.SubElement(task, "Start").text = datetime.strftime(min(sanStart), '%Y-%m-%dT%H:%M:%S')
 ET.SubElement(task, "Finish").text = datetime.strftime(max(sanEnd), '%Y-%m-%dT%H:%M:%S')
-ET.SubElement(task, "Duration").text = f"PT{int(str(max(sanEnd) - min(sanStart)).removesuffix(" days, 0:00:00")) * 8}H0M0S"
+ET.SubElement(task, "Duration").text = f"PT{int(str(max(sanEnd) - min(sanStart)).removesuffix(' days, 0:00:00')) * 8}H0M0S"
 
 # Build individual tasks
 for i in range(len(sTask)):
@@ -181,7 +184,7 @@ for t in root.iter("Task"):
     opID = t.find('UID').get('opID')
 
     # Get API response for relations
-    relationResponse = requests.request('GET', f"https://op.integer-tech.com/api/v3/work_packages/{opID}/relations", auth=('apikey', API_KEY))
+    relationResponse = requests.request('GET', f"https://op.integer-tech.com/api/v3/work_packages/{opID}/relations", auth=('apikey', API_KEY), verify=False)
     relationJson = json.loads(relationResponse.text)
 
     # Check if response is not an error and contains any relations
